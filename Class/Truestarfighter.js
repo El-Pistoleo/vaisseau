@@ -107,11 +107,13 @@ function initNodes(Id) {
 
   switch(Id) {
 
+    //Dessin du cockpit
     case baseId:
     // create a node
     figure[baseId] = createNode( m, drawCockpit, f_Left_WingIDFront, protectLeftId );
     break;
 
+    //Dessin du Réacteur gauche
     case left_reactorID:
     // positions the object in the scene
     m = mult(m, rotate(90, 0, 1, 0));
@@ -120,6 +122,7 @@ function initNodes(Id) {
     figure[left_reactorID] = createNode( m, reactor, null, right_reactorID);
     break;
 
+    //Dessin du Réacteur droit (Il se place par rapport au réacteur gauche)
     case right_reactorID:
     // positions the object in the scene
     m = mult(m, translate(-2, 0 ,0));
@@ -127,6 +130,7 @@ function initNodes(Id) {
     figure[right_reactorID] = createNode( m, reactor, null, null );
     break;
 
+    //Dessin de l'aile avant gauche (Juste les 2 triangles)
     case f_Left_WingIDFront:
     // create a node
     m = mult(m, rotate(105, 1, 0, 0));
@@ -134,7 +138,8 @@ function initNodes(Id) {
     figure[f_Left_WingIDFront] = createNode( m, f_wingFront, f_Left_WingIDBack, null);
     break;
 
-    case f_Right_WingIDFront:
+    //Dessin de l'aile avant droite (Juste les 2 triangles)
+    case f_Right_WingIDFront :
     // create a node
     m = mult(m, scale(1, 1, -1));
     m = mult(m, rotate(105, 1, 0, 0));
@@ -142,6 +147,7 @@ function initNodes(Id) {
     figure[f_Right_WingIDFront] = createNode( m, f_wingFront , f_Right_WingIDBack, r_blaster );
     break;
 
+    //Dessin de l'aile arriere gauche (Toute la partie arrière avec le cylindre qui maintient les ailrons)
     case f_Left_WingIDBack:
     // create a node
     m = mult(m, rotate(105, 1, 0, 0));
@@ -150,6 +156,7 @@ function initNodes(Id) {
     figure[f_Left_WingIDBack] = createNode( m, f_wingNear, f_Right_WingIDFront , l_blaster);
     break;
 
+    //Dessin de l'aile arriere droite (Toute la partie arrière avec le cylindre qui maintient les ailrons)
     case f_Right_WingIDBack:
     // create a node
     m = mult(m, scale4(1, 1, -1));
@@ -159,6 +166,7 @@ function initNodes(Id) {
     figure[f_Right_WingIDBack] = createNode( m, f_wingNear , b_reacId, n_wingRightId );
     break;
 
+    //Dessin du blaster situé à droite
     case r_blaster:
     // create a node
     m = mult(m, rotate(90, 0, 1, 0  ));
@@ -167,6 +175,7 @@ function initNodes(Id) {
     figure[r_blaster] = createNode( m, blaster , null, null );
     break;
 
+    //Dessin du blaster situé à gauche
     case l_blaster:
     // create a node
     m = mult(m, rotate(90, -1, 0, 0  ));
@@ -174,6 +183,7 @@ function initNodes(Id) {
     m = mult(m, translate(6, -6.5, 0));
     figure[l_blaster] = createNode( m, blaster , n_wingLeftId,  null);
     break;
+
 
     case n_wingLeftId:
     // create a node
@@ -189,18 +199,21 @@ function initNodes(Id) {
     figure[n_wingRightId] = createNode( m, partLeft , null,  n_wingRightRotationUp);
     break;
 
+    //Dessin des ailerons
     case n_wingLeftRotationUp:
     // create a node
     m = mult(m, translate(-8, 0, -1.2));
     figure[n_wingLeftRotationUp] = createNode( m, wingRotate , n_wingLeftRotationDown,  null);
     break;
 
+    //Dessin des ailerons
     case n_wingRightRotationUp:
     // create a node.
     m = mult(m, translate(-8, 0, -1.2));
     figure[n_wingRightRotationUp] = createNode( m, wingRotate , n_wingRightRotationDown,  null);
     break;
 
+    //Dessin des ailerons
     case n_wingLeftRotationDown:
     // create a node
     m = mult(m, scale(1, 1, -1));
@@ -209,27 +222,29 @@ function initNodes(Id) {
     figure[n_wingLeftRotationDown] = createNode( m, wingRotate , null,  null);
     break;
 
+    //Dessin des ailerons
     case n_wingRightRotationDown:
     // create a node.
     m = mult(m, scale(1, 1, -1));
-
     m = mult(m, translate(-8, 0, -1.2));
     figure[n_wingRightRotationDown] = createNode( m, wingRotate , null,  null);
     break;
 
+    //Dessin du dessous du vaisseau
     case b_reacId:
     // create a node.
     m = mult(m, translate(4, -6 , 0));
     figure[b_reacId] = createNode( m, b_reac , null,  left_reactorID);
     break;
 
+    //Dessin des protections situées à côté du cockpit
     case protectLeftId:
     // create a node.
     m = mult(m, translate(-10, -3 , 5));
-
     figure[protectLeftId] = createNode( m, protectionCote , null,  protectRightId);
     break;
 
+    //Dessin des protections situées à côté du cockpit
     case protectRightId:
     // create a node.
     m = mult(m, translate(0, 0 , -10));
@@ -282,44 +297,42 @@ function createNode(transform, render, sibling, child){
 }
 
 
+//Les protections sur le côté du cockpit
 function protectionCote(){
   var baseModelView = modelview;
 
+  modelview = mult(modelview, translate(0.1, 0, -1));
   modelview = mult(modelview, rotate(-10, 0, 1, 0));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-  modelview = mult(modelview, scale4(0.15, 0.08, 0.08));
+  modelview = mult(modelview, scale4(0.15, 0.08, 0.12));
   triangleRectangle.render();
 
   modelview = baseModelView;
-  modelview = mult(modelview, translate(5.1, 0.9, 0.5));
+  modelview = mult(modelview, translate(5.1, 0.9, -2));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-  modelview = mult(modelview, scale4(-0.08, 0.04, 0.08));
+  modelview = mult(modelview, scale4(-0.08, 0.04, 0.18));
   triangleRectangle.render();
 
   modelview = baseModelView;
   modelview = mult(modelview, translate(7, -1, 2.5));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-  modelview = mult(modelview, scale4(1.2, 0.3, 0.02));
+  modelview = mult(modelview, scale4(1.2, 0.3, 0.06));
   cube.render();
 
   modelview = baseModelView;
-  modelview = mult(modelview, translate(11, -1, 1.7));
+  modelview = mult(modelview, translate(11, -0.6, 1.6));
   modelview = mult(modelview, rotate(-110, 0, 1, 0));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-  modelview = mult(modelview, scale4(0.35, 0.5, 0.1));
+  modelview = mult(modelview, scale4(0.35, 0.25, 0.1));
   cube.render();
-
-
-
 
   modelview = baseModelView;
 
 }
 
+//Le cockpit
 function drawCockpit(){
   var baseModelView = modelview;
-
-
 
   modelview = mult(modelview, rotate(-90, 0, 1, 0));
 
@@ -337,6 +350,7 @@ function drawCockpit(){
   modelview = baseModelView;
 }
 
+//Le dessous du cockpit
 function b_reac(){
   var baseModelView = modelview;
 
@@ -356,7 +370,7 @@ function b_reac(){
 
 }
 
-
+//Les ailerons
 function wingRotate(){
   var baseModelView = modelview;
 
@@ -374,6 +388,7 @@ function wingRotate(){
   modelview = baseModelView;
 }
 
+//La partie arrière des ailes
 function partLeft(){
   var baseModelView = modelview;
 
@@ -404,20 +419,20 @@ function partLeft(){
   modelview = baseModelView;
 }
 
+//Les réacteurs
 function reactor(){
   var baseModelView = modelview;
-
 
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
   modelview = mult(modelview, scale4(0.3, 0.3, 0.8));
    // modelview = mult(modelview, scale4(5, 5, 0.8));
-
   reactor.render();
-
   modelview = baseModelView;
 
 }
 
+
+//Le devant des ailes
 function f_wingFront(){
   var baseModelView = modelview;
 
@@ -435,22 +450,13 @@ function f_wingFront(){
   modelview = baseModelView;
 }
 
-function f_wingNear(){
+//Inutilisée mais permet le placement des autres objets (Il s'agit d'une erreur de ma part)
+function f_wingNear(){}
 
-    var baseModelView = modelview;
-
-    normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-    modelview = mult(modelview, scale4(0.04 , 0.45, 0.25));
-    triangleCenter.render();
-
-    modelview = baseModelView;
-
-}
-
+//Les blaster situé au milieu
 function blaster(){
     var baseModelView = modelview;
     var inc, scaling;
-
 
     modelview = mult(modelview, translate(0, 0, 3));
     normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
