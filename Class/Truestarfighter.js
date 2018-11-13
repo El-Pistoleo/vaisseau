@@ -426,8 +426,10 @@ function f_wingFront(){
   triangleRectangle.render();
 
   modelview = baseModelView;
-  modelview = mult(modelview, rotate(90 , 0, 0, 1));
+  modelview = mult(modelview, translate(0 , -2, 6));
+  modelview = mult(modelview, rotate(90 , 0, 1, 0));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
+  modelview = mult(modelview, scale4(0.4 , 0.4, 0.4));
   tetra.render();
 
   modelview = baseModelView;
