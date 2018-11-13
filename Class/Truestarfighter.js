@@ -451,7 +451,16 @@ function f_wingFront(){
 }
 
 //Inutilisée mais permet le placement des autres objets (Il s'agit d'une erreur de ma part)
-function f_wingNear(){}
+function f_wingNear(){
+
+
+      var baseModelView = modelview;
+      normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
+      modelview = mult(modelview, scale4(0.04 , 0.45, 0.25));
+      triangleCenter.render();
+      modelview = baseModelView;
+
+}
 
 //Les blaster situé au milieu
 function blaster(){
