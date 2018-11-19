@@ -17,12 +17,17 @@ var ProjectionLoc;     // Location of the uniform variables in the standard text
 var ModelviewLoc;
 var NormalMatrixLoc;
 
+var textureLoc;
 
 var instanceMatrix = mat4();
 
 var projection;   //--- projection matrix
 var modelview;    // modelview matrix
 var flattenedmodelview;    //--- flattened modelview matrix
+
+var textureArray = [];
+
+var custonMaterial = [];
 
 var normalMatrix = mat3();  //--- create a 3X3 matrix that will affect normals
 
@@ -53,6 +58,9 @@ var ambientProduct, diffuseProduct, specularProduct;
 
 var numNodes = 18;
 
+var nbtextures_tobeloaded=0;
+var nbtextures_loaded=0;
+
 var baseId = 0;
 var left_reactorID = 1;
 var right_reactorID = 2;
@@ -71,6 +79,12 @@ var n_wingRightRotationDown = 14;
 var b_reacId = 15;
 var protectLeftId = 16;
 var protectRightId = 17;
+
+var textMetalId= 0;
+var textFrontCockpitId = 1;
+var textCockpitId = 2;
+var wingTextureId = 3;
+var protectTextureId = 4;
 
 var cockpitLength = 25;
 var cockpitHeight = 7.5;
@@ -92,10 +106,14 @@ function render() {
       flattenedmodelview = rotator.getViewMatrix();
       modelview = unflatten(flattenedmodelview);
 
-    gl.clearColor(0.8, 0.8, 0.8, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    var pos = [0,0,0];
-    traverse(baseId);
+      if(nbtextures_loaded == nbtextures_tobeloaded){ // on fait le render quand toutes les textures ont chargées
+        gl.clearColor(0.8, 0.8, 0.8, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        var pos = [0,0,0];
+        traverse(baseId);
+      }
+
+
 
 }
 
@@ -296,10 +314,23 @@ function createNode(transform, render, sibling, child){
   return node;
 }
 
+function createTexture(id, textureId, gl_texture){
+  var newTexture = {
+    id : id,
+    textureID : textureId,
+    gl_text : gl_texture
+  };
+  return newTexture;
+}
+
 
 //Les protections sur le côté du cockpit
 function protectionCote(){
+
+
   var baseModelView = modelview;
+
+  applyTexture(protectTextureId);
 
   modelview = mult(modelview, translate(0.1, 0, -1));
   modelview = mult(modelview, rotate(-10, 0, 1, 0));
@@ -308,7 +339,7 @@ function protectionCote(){
   triangleRectangle.render();
 
   modelview = baseModelView;
-  modelview = mult(modelview, translate(5.1, 0.9, -2));
+  modelview = mult(modelview, translate(5.1, 0.8, -2));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
   modelview = mult(modelview, scale4(-0.08, 0.04, 0.18));
   triangleRectangle.render();
@@ -334,11 +365,20 @@ function protectionCote(){
 function drawCockpit(){
   var baseModelView = modelview;
 
-  modelview = mult(modelview, rotate(-90, 0, 1, 0));
+  applyTexture(textCockpitId);
+  var customAmbient = vec4(0.4, 0.4, 0.4, 1.0);
+  var custonmDiffuse = vec4(0.48, 0.55, 0.69, 1.0);
+  var customSpecular = vec4(0.48, 0.48, 0.48, 1.0);
+  var materialShininess = 100.0;
+  custonMaterial = [customAmbient, custonmDiffuse, customSpecular, materialShininess];
 
+  modelview = mult(modelview, rotate(-90, 0, 1, 0));
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
   modelview = mult(modelview, scale4(0.3, 0.28, 0.5));
   sphere.render();
+
+  applyTexture(textFrontCockpitId);
+
 
   modelview = baseModelView;
   modelview = mult(modelview, translate(-11, 0, 0));
@@ -346,6 +386,8 @@ function drawCockpit(){
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
   modelview = mult(modelview, scale4(1.6, 1.6, 0.1));
   reactor.render();
+
+  applyTexture(textMetalId);
 
   modelview = baseModelView;
 }
@@ -373,6 +415,8 @@ function b_reac(){
 //Les ailerons
 function wingRotate(){
   var baseModelView = modelview;
+
+  applyTexture(wingTextureId);
 
   normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
   modelview = mult(modelview, scale4(0.02, 0.35, 0.1, 0));
@@ -440,12 +484,6 @@ function f_wingFront(){
   modelview = mult(modelview, scale4(0.4 , 0.2, 0.25));
   triangleRectangle.render();
 
-  modelview = baseModelView;
-  modelview = mult(modelview, translate(0 , -2, 6));
-  modelview = mult(modelview, rotate(90 , 0, 1, 0));
-  normalMatrix = extractNormalMatrix(modelview);  // always extract the normal matrix before scaling
-  modelview = mult(modelview, scale4(0.4 , 0.4, 0.4));
-  tetra.render();
 
   modelview = baseModelView;
 }
@@ -641,6 +679,22 @@ function createModel(modelData) {
   // The following function is NOT executed here. It is only DEFINED to be used later when we
   // call the ".render()" method.
   model.render = function () {
+
+    if(custonMaterial.length == 4){
+      var newAmbientProduct = mult(lightAmbient, custonMaterial[0]);
+      var newDiffuseProduct = mult(lightDiffuse, custonMaterial[1]);
+      var newSpecularProduct = mult(lightSpecular, custonMaterial[2]);
+
+       gl.uniform4fv(gl.getUniformLocation(prog, "ambientProduct"), flatten(newAmbientProduct));
+       gl.uniform4fv(gl.getUniformLocation(prog, "diffuseProduct"), flatten(newDiffuseProduct));
+       gl.uniform4fv(gl.getUniformLocation(prog, "specularProduct"), flatten(newSpecularProduct));
+       gl.uniform1f(gl.getUniformLocation(prog, "shininess"), custonMaterial[3]);
+    }
+
+    gl.enableVertexAttribArray(CoordsLoc);
+    gl.enableVertexAttribArray(NormalLoc);
+    gl.enableVertexAttribArray(TexCoordLoc);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, this.coordsBuffer);
     gl.vertexAttribPointer(CoordsLoc, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
@@ -767,6 +821,7 @@ window.onload = function init() {
     projection = perspective(120.0, 1.0, 1.0, 200.0);
     gl.uniformMatrix4fv(ProjectionLoc, false, flatten(projection));  // send projection matrix to the shader program
 
+    textureLoc = gl.getUniformLocation(prog, "texture");
 
 
 
@@ -777,6 +832,7 @@ window.onload = function init() {
     // in the file "basic-objects-IFS.js". They return an "object" containing vertices, normals,
     // texture coordinates and indices.
     //
+    initTexture();
 
     for( var i=0; i<numNodes; i++) figure[i] = createNode(null, null, null, null);
 
@@ -809,6 +865,52 @@ window.onload = function init() {
   resize(canvas);  // size the canvas to the current window width and height
   setInterval(render, 50);
 
+}
+
+function initTexture(){
+  addTexture(textMetalId, "textures/body2.jpg", gl.TEXTURE0);
+  addTexture(textFrontCockpitId, "textures/FrontCockpit.png", gl.TEXTURE1);
+  addTexture(textCockpitId, "textures/texCockpit2.jpg", gl.TEXTURE2);
+  addTexture(wingTextureId, "textures/wingTexture.png", gl.TEXTURE3);
+  addTexture(protectTextureId, "textures/protectTexture.png", gl.TEXTURE4);
+}
+
+
+function addTexture(id_local, img_path, gl_texture_id){
+
+  var textureId = gl.createTexture();
+ textureId.image = new Image();
+
+ textureId.image.onload = function () {
+   handleLoadedTexture(textureId);
+ }
+
+ textureId.image.src = img_path;
+ nbtextures_tobeloaded++;
+
+  var newTexture = createTexture(id_local, textureId, gl_texture_id);
+
+  textureArray[id_local] = newTexture;
+}
+
+function handleLoadedTexture(texture) {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+    nbtextures_loaded++;
+    render();  // Call render function when the image has been loaded (to insure the model is displayed)
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+//Permet d'appliquer une texture selon un id, grace au tableau precedemment cree
+function applyTexture(id){
+  gl.activeTexture(textureArray[id].gl_text);
+  gl.bindTexture(gl.TEXTURE_2D, textureArray[id].textureID);
+  gl.uniform1i(textureLoc, textureArray[id].id);
 }
 
 function resize(canvas) {  // ref. https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html

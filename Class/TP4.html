@@ -8,79 +8,81 @@
 
 
   <script type="x-shader/x-vertex" id="vshader">
-  uniform mat4 projection;
-  uniform mat4 modelview;
-  uniform vec4 lightPosition;
-  uniform mat3 normalMatrix;
+       uniform mat4 projection;
+       uniform mat4 modelview;
+       uniform vec4 lightPosition;
+       uniform mat3 normalMatrix;
 
-  attribute vec3 vcoords;
-  attribute vec3 vnormal;
-  attribute vec2 vtexcoord;
+       attribute vec3 vcoords;
+       attribute vec3 vnormal;
+       attribute vec2 vtexcoord;
 
-  varying vec3 fN, fL, fE;
-  varying vec3 fviewCoords;
-  varying vec2 fTexCoord;
+       varying vec3 fN, fL, fE;
+       varying vec3 fviewCoords;
+       varying vec2 fTexCoord;
 
-  void main() {
-    vec4 eyeCoords = modelview * vec4(vcoords,1.0);
-    gl_Position = projection * eyeCoords;
+       void main() {
+          vec4 eyeCoords = modelview * vec4(vcoords,1.0);
+          gl_Position = projection * eyeCoords;
 
-    vec3 pos = eyeCoords.xyz;
+          vec3 pos = eyeCoords.xyz;
 
-    // Modify light position according to the
-    // transformations applied if you want the light
-    // to move with the objects
-    //        vec3 light = (modelview * lightPosition).xyz;
-    vec3 light = (lightPosition).xyz;
+            // Modify light position according to the
+            // transformations applied if you want the light
+            // to move with the objects
+  //        vec3 light = (modelview * lightPosition).xyz;
+          vec3 light = (lightPosition).xyz;
 
-    // Now compute vectors L, E and N.
-    // Note that N is affected by the
-    // transformations applied.
+            // Now compute vectors L, E and N.
+            // Note that N is affected by the
+            // transformations applied.
 
-    fL = normalize( light - pos );
-    fE = normalize(-pos);
-    fN = normalMatrix * normalize(vnormal);
+          fL = normalize( light - pos );
+          fE = normalize(-pos);
+          fN = normalMatrix * normalize(vnormal);
 
 
-    fviewCoords = eyeCoords.xyz;
-    fTexCoord = vtexcoord;
-  }
-</script>
+          fviewCoords = eyeCoords.xyz;
+          fTexCoord = vtexcoord;
+       }
+  </script>
 
-<script type="x-shader/x-fragment" id="fshader">
-precision mediump float;
+  <script type="x-shader/x-fragment" id="fshader">
+       precision mediump float;
 
-uniform vec4 ambientProduct;
-uniform vec4 diffuseProduct;
-uniform vec4 specularProduct;
-uniform float shininess;
+       uniform sampler2D texture;
 
-varying vec3 fN, fL, fE;
-varying vec3 fviewCoords;
-varying vec2 fTexCoord;
+       uniform vec4 ambientProduct;
+       uniform vec4 diffuseProduct;
+       uniform vec4 specularProduct;
+       uniform float shininess;
 
-void main() {
+       varying vec3 fN, fL, fE;
+       varying vec3 fviewCoords;
+       varying vec2 fTexCoord;
 
-  vec4 Color;
+       void main() {
 
-  vec3 H = normalize( fL + fE );
-  vec4 ambient = ambientProduct;
+            vec4 Color;
 
-  float factorLN = max( dot(fL, fN), 0.0 );
-  vec4  diffuse = factorLN*diffuseProduct;
+            vec3 H = normalize( fL + fE );
+            vec4 ambient = ambientProduct;
 
-  float factorNH = pow( max(dot(fN, H), 0.0), shininess );
-  vec4  specular = factorNH * specularProduct;
+            float factorLN = max( dot(fL, fN), 0.0 );
+            vec4  diffuse = factorLN*diffuseProduct;
 
-  if( dot(fL, fN) < 0.0 )
-  specular = vec4(0.0, 0.0, 0.0, 1.0);
+            float factorNH = pow( max(dot(fN, H), 0.0), shininess );
+            vec4  specular = factorNH * specularProduct;
 
-  Color = ambient + diffuse + specular;
-  Color.a = 1.0;
+            if( dot(fL, fN) < 0.0 )
+                specular = vec4(0.0, 0.0, 0.0, 1.0);
 
-  gl_FragColor = Color;
-}
-</script>
+            Color = ambient + diffuse + specular;
+            Color.a = 1.0;
+
+            gl_FragColor = Color * texture2D( texture, fTexCoord );
+       }
+  </script>
 
 
 
